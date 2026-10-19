@@ -118,6 +118,12 @@ static const int ROWS       = 8;
 static const int ROW_H      = 24;
 static const int LIST_Y     = 46;
 static const int CLEAN_EVERY = 4;   // every Nth redraw = a flashless two-pass clear (1 = cleanest/slower, higher = snappier / more ghost)
+
+// Re-pull the node list / channels over the LIVE link every few minutes, so nodes
+// the node learns after connect (e.g. via MQTT) appear without a power-cycle.
+static const uint32_t CONFIG_REFRESH_MS = 180000;  // 3 min
+static uint32_t cfgLastMs = 0;
+static int      prevNodeCount = -1;                 // -1 = never drawn; gates refresh redraws
 static int  partialsSinceClean = 0;
 
 static bool     pendRedraw = false, pendFull = false;
@@ -545,7 +551,9 @@ static void handleFrame(const uint8_t* buf, size_t len) {
     }
     case meshtastic_FromRadio_config_complete_id_tag:
       Serial.printf("[config_complete] id=%lu  nodes=%d\n", (unsigned long)g_fr.config_complete_id, nodeCount);
-      requestRedraw(true);
+      // Only repaint when the node list actually changed, so the periodic refresh
+      // (CONFIG_REFRESH_MS) doesn't flash the panel every cycle when nothing's new.
+      if (nodeCount != prevNodeCount) { prevNodeCount = nodeCount; requestRedraw(true); }
       break;
     default: break;
   }
@@ -718,6 +726,13 @@ void loop() {
     outLastMs = now; outEver = true;
     fetchOutdoor();
     if (currentView == VIEW_WEATHER && mode == MODE_LIST) requestRedraw(true);
+  }
+
+  // periodic node-list / channel refresh on the live link (re-request config);
+  // config_complete only repaints if the node count changed, so this is quiet.
+  if (client.connected() && now - cfgLastMs > CONFIG_REFRESH_MS) {
+    cfgLastMs = now;
+    sendWantConfig(1);
   }
 
   if (pendRedraw && now - lastChange > COALESCE_MS) {
