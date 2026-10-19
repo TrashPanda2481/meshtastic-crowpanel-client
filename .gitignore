@@ -1,0 +1,16 @@
+# PlatformIO build output
+.pio/
+
+# Local secrets (WiFi creds, node address) -- never commit
+include/secrets.h
+
+# Python tooling venv (mock node, etc.)
+tools/venv/
+__pycache__/
+*.pyc
+
+# Editor / IDE
+.vscode/
+
+# Meshtastic node settings backup (contains keys/passwords) -- never commit
+*.store
