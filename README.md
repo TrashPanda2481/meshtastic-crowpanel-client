@@ -158,4 +158,5 @@ respective `lib/` subfolders:
 Meshtastic® is a registered trademark of Meshtastic LLC; this is an independent
 hobby project and is not affiliated with or endorsed by Meshtastic LLC.
 
-Choose and add a license for your own code before sharing widely.
+This project's own code is released under the [MIT License](LICENSE). The
+vendored third-party code under `lib/` keeps its own license (see above).
